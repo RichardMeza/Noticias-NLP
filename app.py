@@ -196,11 +196,42 @@ def main():
         layout="wide"
     )
 
-    st.title("📰 Analizador de Noticias Peruanas")
-    st.write(
-        "Aplicación de Procesamiento de Lenguaje Natural para analizar noticias "
-        "mediante extracción de texto, preprocesamiento, entidades, sentimiento y resumen automático."
-    )
+    st.markdown("""
+<style>
+.header-box {
+    background: linear-gradient(135deg, #dff6ff, #b8e8fc);
+    padding: 30px;
+    border-radius: 15px;
+    border-left: 8px solid #0096c7;
+    margin-bottom: 20px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+}
+
+.header-title {
+    font-size: 42px;
+    font-weight: bold;
+    color: #023e8a;
+}
+
+.header-subtitle {
+    font-size: 18px;
+    color: #444;
+}
+</style>
+""", unsafe_allow_html=True)
+  
+st.markdown("""
+<div class="header-box">
+    <div class="header-title">
+        📰 Analizador de Noticias Peruanas
+    </div>
+
+    <div class="header-subtitle">
+        Aplicación de Procesamiento de Lenguaje Natural para analizar noticias mediante extracción de texto,
+        preprocesamiento, entidades, sentimiento y resumen automático.
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
     st.divider()
 
