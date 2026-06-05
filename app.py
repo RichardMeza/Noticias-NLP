@@ -197,82 +197,198 @@ def main():
     )
 
     st.title("📰 Analizador de Noticias Peruanas")
-    st.write("Aplicación de PLN: extracción, preprocesamiento, NER, sentimiento y resumen automático.")
+    st.write(
+        "Aplicación de Procesamiento de Lenguaje Natural para analizar noticias "
+        "mediante extracción de texto, preprocesamiento, entidades, sentimiento y resumen automático."
+    )
+
+    st.divider()
+
+    # ─────────────────────────────────────────────
+    # Selección de fuente
+    # ─────────────────────────────────────────────
+    st.subheader("📥 Fuente de entrada")
 
     tab_url, tab_pdf = st.tabs(["🔗 Desde URL", "📄 Desde PDF"])
 
     datos = None
 
     with tab_url:
-        url = st.text_input("Ingrese la URL de la noticia")
+        url = st.text_input(
+            "Ingrese la URL de la noticia",
+            placeholder="https://rpp.pe/..."
+        )
 
-        if st.button("Analizar noticia desde URL"):
+        analizar_url = st.button("Analizar noticia desde URL")
+
+        if analizar_url:
             if url:
-                with st.spinner("Cargando modelos..."):
+                with st.spinner("Cargando modelos PLN..."):
                     nlp, analizador = cargar_modelos()
 
-                with st.spinner("Extrayendo texto..."):
-                    datos = extraer_texto(url)
+                with st.spinner("Extrayendo texto de la noticia..."):
+                    try:
+                        datos = extraer_texto(url)
+                    except Exception as e:
+                        st.error(f"No se pudo extraer el texto: {e}")
+                        datos = None
+
+                if datos and not datos["texto"]:
+                    st.error("No se encontró texto en esa URL. Prueba con otra noticia.")
+                    datos = None
+            else:
+                st.warning("Primero debes ingresar una URL.")
 
     with tab_pdf:
-        archivo = st.file_uploader("Sube un archivo PDF", type=["pdf"])
+        archivo = st.file_uploader(
+            "Sube un archivo PDF",
+            type=["pdf"]
+        )
 
-        if archivo is not None:
-            if st.button("Analizar PDF"):
-                with st.spinner("Cargando modelos..."):
+        analizar_pdf = st.button("Analizar PDF")
+
+        if analizar_pdf:
+            if archivo is not None:
+                with st.spinner("Cargando modelos PLN..."):
                     nlp, analizador = cargar_modelos()
 
                 with st.spinner("Extrayendo texto del PDF..."):
-                    datos = extraer_texto_pdf(archivo.read(), archivo.name)
+                    try:
+                        datos = extraer_texto_pdf(archivo.read(), archivo.name)
+                    except Exception as e:
+                        st.error(f"No se pudo leer el PDF: {e}")
+                        datos = None
+
+                if datos and not datos["texto"]:
+                    st.error("El PDF no contiene texto extraíble. Puede ser un PDF escaneado.")
+                    datos = None
+            else:
+                st.warning("Primero debes subir un archivo PDF.")
 
     if datos is None:
         st.info("Ingrese una URL o suba un PDF para iniciar el análisis.")
         return
 
-    st.subheader("📌 Artículo analizado")
-    st.write(f"**Título:** {datos['titulo']}")
-    st.write(f"**Fecha:** {datos['fecha']}")
-    st.write(f"**Autor(es):** {datos['autores']}")
+    st.divider()
 
-    with st.expander("Ver texto completo"):
+    # ─────────────────────────────────────────────
+    # Información del artículo
+    # ─────────────────────────────────────────────
+    with st.container(border=True):
+        st.subheader("📌 Artículo analizado")
+
+        col_a, col_b = st.columns([2, 1])
+
+        with col_a:
+            st.write(f"**Título:** {datos['titulo']}")
+            st.write(f"**Autor(es):** {datos['autores']}")
+
+        with col_b:
+            st.write(f"**Fecha:** {datos['fecha']}")
+            st.write(f"**Cantidad de caracteres:** {len(datos['texto'])}")
+
+    with st.expander("📄 Ver texto completo extraído"):
         st.write(datos["texto"])
 
+    # ─────────────────────────────────────────────
+    # Preprocesamiento
+    # ─────────────────────────────────────────────
     with st.spinner("Preprocesando texto..."):
         prep = preprocesar(datos["texto"], nlp)
 
-    st.subheader("⚙️ Texto preprocesado")
-    st.text_area("Texto limpio", prep["texto_limpio"][:1500], height=200)
+    with st.container(border=True):
+        st.subheader("⚙️ Texto preprocesado")
 
+        st.text_area(
+            "Texto limpio",
+            prep["texto_limpio"][:1500],
+            height=220
+        )
+
+        st.markdown("**Palabras más frecuentes:**")
+        st.dataframe(
+            {
+                "Palabra": [p[0] for p in prep["frecuencia"]],
+                "Frecuencia": [p[1] for p in prep["frecuencia"]]
+            },
+            use_container_width=True
+        )
+
+    st.divider()
+
+    # ─────────────────────────────────────────────
+    # Técnicas PLN
+    # ─────────────────────────────────────────────
     st.subheader("🧠 Técnicas de PLN")
 
     col1, col2, col3 = st.columns(3)
 
+    # NER
     with col1:
-        st.markdown("### 🏷️ Entidades")
-        entidades = aplicar_ner(datos["texto"], nlp)
+        with st.container(border=True):
+            st.markdown("### 🏷️ Entidades")
 
-        if entidades:
-            for tipo, lista in entidades.items():
-                st.write(f"**{tipo}:**")
-                st.write(", ".join(lista[:10]))
-        else:
-            st.write("No se encontraron entidades.")
+            with st.spinner("Reconociendo entidades..."):
+                entidades = aplicar_ner(datos["texto"], nlp)
 
+            if entidades:
+                for tipo, lista in entidades.items():
+                    st.markdown(f"**{tipo}:**")
+                    st.dataframe(
+                        {"Entidades encontradas": lista[:15]},
+                        use_container_width=True
+                    )
+            else:
+                st.info("No se encontraron entidades.")
+
+    # Sentimiento
     with col2:
-        st.markdown("### 😊 Sentimiento")
-        sentimiento = analizar_sentimiento(datos["texto"], analizador)
+        with st.container(border=True):
+            st.markdown("### 😊 Sentimiento")
 
-        st.metric("Sentimiento", sentimiento["sentimiento"])
-        st.metric("Confianza", f"{sentimiento['confianza']}%")
+            with st.spinner("Analizando sentimiento..."):
+                sentimiento = analizar_sentimiento(datos["texto"], analizador)
 
-        st.write("Detalle:")
-        st.write(sentimiento["detalle"])
+            st.metric("Sentimiento", sentimiento["sentimiento"])
+            st.metric("Confianza", f"{sentimiento['confianza']}%")
 
+            detalle_sentimiento = {
+                "Sentimiento": list(sentimiento["detalle"].keys()),
+                "Probabilidad (%)": list(sentimiento["detalle"].values())
+            }
+
+            st.markdown("**Detalle del análisis:**")
+            st.dataframe(
+                detalle_sentimiento,
+                use_container_width=True
+            )
+
+            st.bar_chart(
+                data=detalle_sentimiento,
+                x="Sentimiento",
+                y="Probabilidad (%)"
+            )
+
+    # Resumen
     with col3:
-        st.markdown("### 📝 Resumen")
-        resumen = resumir_texto(datos["texto"])
-        st.write(resumen)
+        with st.container(border=True):
+            st.markdown("### 📝 Resumen")
 
+            with st.spinner("Generando resumen..."):
+                resumen = resumir_texto(datos["texto"])
+
+            st.text_area(
+                "Resumen automático",
+                resumen,
+                height=350
+            )
+
+    st.divider()
+
+    st.caption(
+        "Proyecto de Procesamiento de Lenguaje Natural: extracción de texto, "
+        "preprocesamiento, NER, análisis de sentimiento y resumen automático."
+    )
 
 if __name__ == "__main__":
     main()
