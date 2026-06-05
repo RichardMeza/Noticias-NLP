@@ -190,54 +190,78 @@ def resumir_texto(texto: str, num_oraciones: int = 4) -> str:
 # INTERFAZ STREAMLIT
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
+
     st.set_page_config(
         page_title="Analizador de Noticias Peruanas",
         page_icon="📰",
         layout="wide"
     )
 
+    # =====================================================
+    # ESTILO DEL ENCABEZADO
+    # =====================================================
+
     st.markdown("""
-<style>
-.header-box {
-    background: linear-gradient(135deg, #dff6ff, #b8e8fc);
-    padding: 30px;
-    border-radius: 15px;
-    border-left: 8px solid #0096c7;
-    margin-bottom: 20px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-}
+    <style>
 
-.header-title {
-    font-size: 42px;
-    font-weight: bold;
-    color: #023e8a;
-}
+    .header-container{
+        background: linear-gradient(
+            135deg,
+            #dff6ff 0%,
+            #caf0f8 50%,
+            #ade8f4 100%
+        );
 
-.header-subtitle {
-    font-size: 18px;
-    color: #444;
-}
-</style>
-""", unsafe_allow_html=True)
-  
-st.markdown("""
-<div class="header-box">
+        padding: 35px;
+        border-radius: 15px;
+        margin-bottom: 25px;
+
+        border-left: 10px solid #0077b6;
+
+        box-shadow: 0px 4px 12px rgba(0,0,0,0.10);
+    }
+
+    .header-title{
+        font-size: 42px;
+        font-weight: 700;
+        color: #023e8a;
+        margin-bottom: 10px;
+    }
+
+    .header-subtitle{
+        font-size: 18px;
+        color: #333333;
+        line-height: 1.6;
+    }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+    # =====================================================
+    # ENCABEZADO
+    # =====================================================
+
+    st.markdown("""
+    <div class="header-container">
+
     <div class="header-title">
         📰 Analizador de Noticias Peruanas
     </div>
 
     <div class="header-subtitle">
         Aplicación de Procesamiento de Lenguaje Natural para analizar noticias mediante extracción de texto,
-        preprocesamiento, entidades, sentimiento y resumen automático.
+        preprocesamiento, reconocimiento de entidades, análisis de sentimiento y resumen automático.
     </div>
-</div>
-""", unsafe_allow_html=True)
+
+    </div>
+    """, unsafe_allow_html=True)
 
     st.divider()
 
-    # ─────────────────────────────────────────────
-    # Selección de fuente
-    # ─────────────────────────────────────────────
+    # =====================================================
+    # FUENTE DE ENTRADA
+    # =====================================================
+
     st.subheader("📥 Fuente de entrada")
 
     tab_url, tab_pdf = st.tabs(["🔗 Desde URL", "📄 Desde PDF"])
